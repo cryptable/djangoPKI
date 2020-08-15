@@ -1,0 +1,9 @@
+{% if ca_list %}
+    <ul>
+    {% for ca in ca_list %}
+        <li><a href={%  url 'ca:certs_of_ca' ca.id %}>{{ ca.subject_text }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No CA(s) are available.</p>
+{% endif %}

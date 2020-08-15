@@ -1,0 +1,9 @@
+<h1>{{ ca_name }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<ul>
+{% for cert in  certificate_list  %}
+    <li>{{ cert.common_name_text }}</li>
+{% endfor %}
+</ul>
