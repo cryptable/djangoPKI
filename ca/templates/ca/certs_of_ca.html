@@ -1,4 +1,4 @@
-<h1>{{ ca_name }}</h1>
+<h2>{{ ca.subject_text }}</h2>
 
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
@@ -6,4 +6,6 @@
 {% for cert in  certificate_list  %}
     <li>{{ cert.common_name_text }}</li>
 {% endfor %}
+<br>
+<a href="{% url 'ca:fillin_p10' ca.id%}">Certify Request</a>
 </ul>
