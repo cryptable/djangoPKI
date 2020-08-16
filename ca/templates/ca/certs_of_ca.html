@@ -4,8 +4,16 @@
 
 <ul>
 {% for cert in  certificate_list  %}
-    <li>{{ cert.common_name_text }}</li>
+    <li>
+        <a href="{% url 'ca:detail_cert' cert.id%}">{{ cert.common_name_text }}</a>
+        <a href="{% url 'ca:download_cert' cert.id%}">Download Cert</a>
+        {% if cert.private_key %}
+            <a href="{% url 'ca:download_p12' cert.id %}">Download PKCS12</a>
+        {% endif %}
+    </li>
 {% endfor %}
 <br>
 <a href="{% url 'ca:fillin_p10' ca.id%}">Certify Request</a>
+<br>
+<a href="{% url 'ca:create_cert' ca.id%}">Generate Certificate with Private Key</a>
 </ul>

@@ -13,7 +13,7 @@ class CA(models.Model):
     """
     Defines a Certification Authority
     """
-    serial_number_text = models.CharField(max_length=128)
+    crl_number_text = models.CharField(max_length=128)
 
 
 class Certificate(models.Model):
@@ -24,10 +24,10 @@ class Certificate(models.Model):
     common_name_text = models.CharField(max_length=64)
     given_name_text = models.CharField(max_length=16,blank=True, null=True)
     sur_name_text = models.CharField(max_length=40, blank=True, null=True)
-    initials_text = models.CharField(max_length=5,blank=True, null=True)
     pseudonym_text = models.CharField(max_length=128,blank=True, null=True)
     generation_qualifier_text = models.CharField(max_length=3,blank=True, null=True)
     title_text = models.CharField(max_length=128,blank=True, null=True)
+    street_name_text = models.CharField(max_length=128,blank=True, null=True)
     locality_name_text = models.CharField(max_length=128,blank=True, null=True)
     state_name_text = models.CharField(max_length=128,blank=True, null=True)
     organization_name_text = models.CharField(max_length=64,blank=True, null=True)
@@ -38,6 +38,14 @@ class Certificate(models.Model):
     organizational_unit_5_name_text = models.CharField(max_length=128,blank=True, null=True)
     postal_code_text = models.CharField(max_length=16,blank=True, null=True)
     country_code_text = models.CharField(max_length=2,blank=True, null=True)
+    subject_serial_number_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+    domain_component_1_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+    domain_component_2_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+    domain_component_3_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+    domain_component_4_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+    domain_component_5_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+    email_address_text = models.CharField(max_length=128, blank=True, null=True) # TODO: length check
+
     subject_text = models.CharField(max_length=8192)
     issuer_text = models.CharField(max_length=8192)
     serial_number_text = models.CharField(max_length=128)

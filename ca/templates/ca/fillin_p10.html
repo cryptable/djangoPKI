@@ -1,6 +1,6 @@
 <h2>{{ ca.subject_text }}</h2>
 
-<form action="{% url 'ca:certify_p10' ca.id %}" method="post" i>
+<form action="{% url 'ca:certify_p10' ca.id %}" method="post">
 {% csrf_token %}
     <label for="p10">Copy/Past your PKCS10</label><br>
     <textarea id="p10" name="p10" cols="77" rows="40"></textarea>
