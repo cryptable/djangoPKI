@@ -1,13 +1,114 @@
+{% extends "ca/base_generic.html" %}
+
+{% block title %}Details of the certificate{% endblock %}
+
+{% block pre-scripts %}
+    {% load static %}
+    <script type="text/javascript" src="{% static "js/jquery.js" %}"></script>
+{%  endblock %}
+
+{% block content %}
 <ul>
     Subject Name <li>{{ certificate.subject_text }}</li>
-    Issuer Name <li>{{ certificate.issuer_text }}</li>
-    Serial Number <li>{{ certificate.serial_number_text }}</li>
+    Issuer Name <li><div id="issuer_name">{{ certificate.issuer_text }}</div></li>
+    Serial Number <li><div id="serial_nbr">{{ certificate.serial_number_text }}</div></li>
     <br>
-    <a href="{% url 'ca:download_cert' certificate.id%}">Download Cert</a>
+    <a href="{% url 'ca:download_cert' certificate.id%}">Download Cert</a><br>
+    <button id="install_certificate" type="button">Install Certificate</button><br>
+    <label for="pfx_password">PFX Password to export:</label><input id="pfx_password" type="text" size="20" value="system"><br>
+    <button id="export_pfx" type="button">Export PFX</button><br>
 
     {% if certificate.private_key  %}
         <br>
         <a href="{% url 'ca:download_p12' certificate.id%}">Download PKCS12</a>
+        <br>
+        <label for="p12_password">P12 Password to import:</label><input id="p12_password" type="text" size="20" value="system"><br>
+        <button id="install_p12" type="button">Install PKCS12</button>
+        <div id="native_message_result"></div>
     {% endif %}
+    <b><div id="native_message_result"></div></b><br>
+    <b><textarea id="pfx_base64"  cols="77" rows="40" wrap="soft"></textarea></b>
 
 </ul>
+{%  endblock %}
+
+{% block post-scripts %}
+<script>
+    function import_certificate( base64_pem_certificate, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"import_certificate",
+                certificate: base64_pem_certificate
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function import_pfx_key( base64_pkcs12, passwd, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"import_pfx_key",
+                pkcs12: base64_pkcs12,
+                password: passwd
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function export_pfx_key( issuer_dname, serial_nr, passwd, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"export_pfx_key",
+                issuer: issuer_dname,
+                serial_number: serial_nr,
+                password: passwd
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function receiveMessage(event) {
+        if (event.source == window &&
+            event.data &&
+            event.data.direction == "from-content-script") {
+            var response = event.data.message
+            $( "#native_message_result").html(response.response)
+        }
+    }
+    function receivePFX(event) {
+        if (event.source == window &&
+            event.data &&
+            event.data.direction == "from-content-script") {
+            var response = event.data.message
+            if (response.result == "OK") {
+                $( "#native_message_result").html("Successful retrieved.")
+                $("#pfx_base64").val(response.response)
+            }
+            else {
+                $( "#native_message_result").html(response.response)
+            }
+        }
+    }
+    $( "#install_certificate" ).click(function() {
+        $.get("{% url 'ca:download_cert' certificate.id%}", function(data) {
+            import_certificate(btoa(data), receiveMessage)
+        })
+    });
+    $( "#install_p12" ).click(function() {
+        $.get("{% url 'ca:download_p12_base64' certificate.id%}", function(data) {
+            import_pfx_key(data, $("#p12_password").val(), receiveMessage)
+        })
+    });
+    $( "#export_pfx" ).click(function() {
+        issuer_name = $("#issuer_name").text()
+        ser_num = $("#serial_nbr").text()
+        passwd =  $("#pfx_password").val()
+        export_pfx_key(issuer_name, ser_num, passwd, receivePFX)
+    });
+
+</script>
+
+{% endblock %}

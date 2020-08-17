@@ -1,3 +1,8 @@
+{% extends "ca/base_generic.html" %}
+
+{% block title %}Fill in PKCS10{% endblock %}
+
+{% block content %}
 {% if ca_list %}
     <ul>
     {% for ca in ca_list %}
@@ -7,3 +12,4 @@
 {% else %}
     <p>No CA(s) are available.</p>
 {% endif %}
+{% endblock %}

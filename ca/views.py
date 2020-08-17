@@ -1,4 +1,5 @@
 import datetime, os
+from binascii import b2a_base64
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views import generic
@@ -83,12 +84,12 @@ def certify_p10(request, ca_id):
                                      , decipher_only = False), critical=True)\
         .sign(key, hashes.SHA256(), default_backend())
 
-    pemCert = cert.public_bytes(serialization.Encoding.PEM)
+    pemCert = cert.public_bytes(serialization.Encoding.PEM).decode('ascii')
     new_cert = Certificate()
     new_cert.certificate_text = pemCert
-    new_cert.serial_number_text = str(sernum)
-    new_cert.subject_text = cert.subject.rfc4514_string()
-    new_cert.issuer_text = cert.issuer.rfc4514_string()
+    new_cert.serial_number_text = hex(sernum)
+    new_cert.subject_text = ",".join(attr.rfc4514_string() for attr in cert.subject)
+    new_cert.issuer_text = ",".join(attr.rfc4514_string() for attr in cert.issuer)
     ou_cnt = 0
     dc_cnt = 0
     for attribute in cert.subject:
@@ -208,7 +209,6 @@ class FillInPasswordDetails(ModelForm):
         model = PrivateKey
         fields = ['password_text']
 
-
 def create_cert(request, ca_id):
     create_cert_form = FillInCertForm(request.POST or None)
     password_form = FillInPasswordDetails(request.POST or None)
@@ -258,9 +258,9 @@ def create_cert(request, ca_id):
                                          , encipher_only=False
                                          , decipher_only = False), critical=True)\
             .sign(cakey, hashes.SHA256(), default_backend())
-        certificate.serial_number_text = str(sernum)
-        certificate.subject_text = cert.subject.rfc4514_string();
-        certificate.issuer_text = cert.issuer.rfc4514_string();
+        certificate.serial_number_text = hex(sernum)
+        certificate.subject_text = ",".join(attr.rfc4514_string() for attr in cert.subject)
+        certificate.issuer_text = ",".join(attr.rfc4514_string() for attr in cert.issuer)
         certificate.certificate_text = cert.public_bytes(serialization.Encoding.PEM).decode('ascii')
         private_key_txt = key.private_bytes(encoding=serialization.Encoding.PEM,
                                             format=serialization.PrivateFormat.TraditionalOpenSSL,
@@ -277,3 +277,35 @@ def create_cert(request, ca_id):
         'create_cert_form': create_cert_form,
         'password_form': password_form,
     })
+
+
+def download_p12_base64(request, cert_id):
+    certificate = get_object_or_404(Certificate, pk=cert_id)
+
+    # Load CA certificate and private key
+    passwd = certificate.private_key.password_text
+    rsakey = certificate.private_key.private_key_text
+    key = load_pem_private_key(rsakey.encode('ascii'), passwd.encode('ascii'), default_backend())
+    cert = x509.load_pem_x509_certificate(certificate.certificate_text.encode('ascii'), default_backend())
+    cas = []
+    try:
+        cacert = Certificate.objects.filter(ca__isnull=False).get(subject_text__exact=certificate.issuer_text)
+        while cacert != None:
+            tmp_cacert = x509.load_pem_x509_certificate(cacert.certificate_text.encode('ascii'), default_backend())
+            cas.append(tmp_cacert)
+            if cacert.subject_text == cacert.issuer_text:
+                break
+            else:
+                cacert = Certificate.objects.filter(ca__isnull=False).get(subject_text__exact=cacert.issuer_text)
+    except Certificate.DoesNotExist:
+        pass
+
+    p12 = pkcs12.serialize_key_and_certificates(certificate.common_name_text.encode('ascii'),
+                                                key,
+                                                cert,
+                                                cas,
+                                                serialization.BestAvailableEncryption(passwd.encode('ascii')))
+
+    b64P12 = b2a_base64(p12)
+    response = HttpResponse(b64P12, content_type="text/plain")
+    return response

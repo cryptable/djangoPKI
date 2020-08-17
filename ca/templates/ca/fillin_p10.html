@@ -1,3 +1,13 @@
+{% extends "ca/base_generic.html" %}
+
+{% block title %}Fill in PKCS10{% endblock %}
+
+{% block pre-scripts %}
+    {% load static %}
+    <script type="text/javascript" src="{% static "js/jquery.js" %}"></script>
+{%  endblock %}
+
+{% block content %}
 <h2>{{ ca.subject_text }}</h2>
 
 <form action="{% url 'ca:certify_p10' ca.id %}" method="post">
@@ -7,3 +17,74 @@
     <br>
     <input type="submit" value="Certify">
 </form>
+<p>
+    <label for="p10_dname">PKCS10 DName</label><input id="p10_dname" type="text" size="50" value="cn=John Doe,o=Company,c=US"><br>
+    <button id="create_signing_key" type="button">Create Signing Key</button>
+</p>
+{% endblock %}
+
+{% block post-scripts %}
+<script>
+    function create_csr( subjectName, bitLength, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"create_csr",
+                subject_name: subjectName,
+                rsa_key_length: bitLength
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function import_certificate( base64_pem_certificate, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"import_certificate",
+                certificate: base64_pem_certificate
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function import_pfx_key( base64_pkcs12, passwd, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"import_pfx_key",
+                pkcs12: base64_pkcs12,
+                password: passwd
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function export_pfx_key( issuer_dname, serial_nr, passwd, callback) {
+        window.postMessage({
+            direction: "from-page-script",
+            message: {
+                request:"export_pfx_key",
+                issuer: issuer_dname,
+                serial_number: serial_nr,
+                password: passwd
+            }
+        }, "*")
+        window.addEventListener("message", callback, false);
+    }
+
+    function receiveMessage(event) {
+        if (event.source == window &&
+            event.data &&
+            event.data.direction == "from-content-script") {
+            var response = event.data.message
+            $( "#p10").val(atob(response.response))
+        }
+    }
+    $( "#create_signing_key" ).click(function() {
+        var dname = $("#p10_dname"). val()
+
+        create_csr(dname, 2048, receiveMessage)
+    });
+</script>
+{% endblock %}
