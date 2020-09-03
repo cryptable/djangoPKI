@@ -53,7 +53,6 @@ def fillin_p10(request, ca_id):
 
 def certify_p10(request, ca_id):
     ca_cert = get_object_or_404(Certificate, pk=ca_id)
-    p10 = request.POST['p10']
 
     # Load CA certificate and private key
     passwd = ca_cert.private_key.password_text
