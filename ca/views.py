@@ -1,4 +1,5 @@
-import datetime, os
+import datetime
+import os
 from binascii import b2a_base64
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse
@@ -30,7 +31,7 @@ class IndexView(generic.ListView):
         return Certificate.objects.filter(ca__isnull=False)
 
 
-#TODO refactor the ListView
+# TODO refactor the ListView
 class CertificatesOfCAView(generic.ListView):
     model = Certificate
     context_object_name = 'certificate_list'
@@ -46,10 +47,11 @@ class CertificatesOfCAView(generic.ListView):
             'certificate_list': context,
         }
 
+
 def fillin_p10(request, ca_id):
     ca_cert = get_object_or_404(Certificate, pk=ca_id)
-    return render(request, 'ca/fillin_p10.html', {
-        'ca':ca_cert })
+    return render(request, 'ca/fillin_p10.html', {'ca': ca_cert})
+
 
 def certify_p10(request, ca_id):
     ca_cert = get_object_or_404(Certificate, pk=ca_id)
@@ -61,6 +63,7 @@ def certify_p10(request, ca_id):
     cacert = x509.load_pem_x509_certificate(ca_cert.certificate_text.encode('ascii'), default_backend())
 
     # Load Request
+    p10 = request.POST['p10']
     x509req = x509.load_pem_x509_csr(p10.encode('ascii'), default_backend())
 
     # Create certificate for it
@@ -72,15 +75,15 @@ def certify_p10(request, ca_id):
         .serial_number(sernum)\
         .not_valid_before(timezone.now())\
         .not_valid_after(timezone.now() + datetime.timedelta(days=366))\
-        .add_extension(x509.KeyUsage(digital_signature=True
-                                     , content_commitment=True
-                                     , key_encipherment=False
-                                     , data_encipherment=False
-                                     , key_agreement=False
-                                     , key_cert_sign=False
-                                     , crl_sign=False
-                                     , encipher_only=False
-                                     , decipher_only = False), critical=True)\
+        .add_extension(x509.KeyUsage(digital_signature=True,
+                                     content_commitment=True,
+                                     key_encipherment=False,
+                                     data_encipherment=False,
+                                     key_agreement=False,
+                                     key_cert_sign=False,
+                                     crl_sign=False,
+                                     encipher_only=False,
+                                     decipher_only=False), critical=True)\
         .sign(key, hashes.SHA256(), default_backend())
 
     pemCert = cert.public_bytes(serialization.Encoding.PEM).decode('ascii')
@@ -139,12 +142,12 @@ def certify_p10(request, ca_id):
                 new_cert.domain_component_4_text = attribute.value
             if dc_cnt == 4:
                 new_cert.domain_component_5_text = attribute.value
-            dc_cnt+=1
+            dc_cnt += 1
         if attribute.oid == NameOID.EMAIL_ADDRESS:
             new_cert.email_address_text = attribute.value
         if attribute.oid == NameOID.POSTAL_CODE:
             new_cert.postal_code_text = attribute.value
-    new_cert.save();
+    new_cert.save()
     return HttpResponseRedirect(reverse('ca:certs_of_ca', args=(ca_id,)))
 
 
@@ -167,7 +170,7 @@ def download_p12(request, cert_id):
     cas = []
     try:
         cacert = Certificate.objects.filter(ca__isnull=False).get(subject_text__exact=certificate.issuer_text)
-        while cacert != None:
+        while cacert is not None:
             tmp_cacert = x509.load_pem_x509_certificate(cacert.certificate_text.encode('ascii'), default_backend())
             cas.append(tmp_cacert)
             if cacert.subject_text == cacert.issuer_text:
@@ -208,6 +211,7 @@ class FillInPasswordDetails(ModelForm):
         model = PrivateKey
         fields = ['password_text']
 
+
 def create_cert(request, ca_id):
     create_cert_form = FillInCertForm(request.POST or None)
     password_form = FillInPasswordDetails(request.POST or None)
@@ -233,7 +237,7 @@ def create_cert(request, ca_id):
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organizational_unit_1_name),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organizational_unit_2_name),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organizational_unit_3_name),
-            x509.NameAttribute(NameOID.COUNTRY_NAME, common_country_code),])
+            x509.NameAttribute(NameOID.COUNTRY_NAME, common_country_code), ])
         tmp_private_key = password_form.save(commit=False)
 
         password = tmp_private_key.password_text
@@ -247,15 +251,15 @@ def create_cert(request, ca_id):
             .public_key(key.public_key()) \
             .not_valid_before(timezone.now())\
             .not_valid_after(timezone.now() + datetime.timedelta(days=366))\
-            .add_extension(x509.KeyUsage(digital_signature=False
-                                         , content_commitment=False
-                                         , key_encipherment=True
-                                         , data_encipherment=True
-                                         , key_agreement=False
-                                         , key_cert_sign=False
-                                         , crl_sign=False
-                                         , encipher_only=False
-                                         , decipher_only = False), critical=True)\
+            .add_extension(x509.KeyUsage(digital_signature=False,
+                                         content_commitment=False,
+                                         key_encipherment=True,
+                                         data_encipherment=True,
+                                         key_agreement=False,
+                                         key_cert_sign=False,
+                                         crl_sign=False,
+                                         encipher_only=False,
+                                         decipher_only=False), critical=True)\
             .sign(cakey, hashes.SHA256(), default_backend())
         certificate.serial_number_text = hex(sernum)
         certificate.subject_text = ",".join(attr.rfc4514_string() for attr in cert.subject)
@@ -270,7 +274,6 @@ def create_cert(request, ca_id):
         certificate.private_key = tmp_private_key
         certificate.save()
         return HttpResponseRedirect(reverse('ca:certs_of_ca', args=(ca_id,)))
-
 
     return render(request, 'ca/create_cert.html', {
         'create_cert_form': create_cert_form,
@@ -289,7 +292,7 @@ def download_p12_base64(request, cert_id):
     cas = []
     try:
         cacert = Certificate.objects.filter(ca__isnull=False).get(subject_text__exact=certificate.issuer_text)
-        while cacert != None:
+        while cacert is not None:
             tmp_cacert = x509.load_pem_x509_certificate(cacert.certificate_text.encode('ascii'), default_backend())
             cas.append(tmp_cacert)
             if cacert.subject_text == cacert.issuer_text:

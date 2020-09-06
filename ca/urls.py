@@ -14,4 +14,3 @@ urlpatterns = [
     path('cert/<int:cert_id>/downloadp12', views.download_p12, name='download_p12'),
     path('cert/<int:cert_id>/downloadp12b64', views.download_p12_base64, name='download_p12_base64'),
 ]
-
