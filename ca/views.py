@@ -213,11 +213,9 @@ def create_cert(request, ca_id):
     create_cert_form = FillInCertForm(request.POST or None, initial={
         'common_name_text': 'John Doe Encryption',
         'organization_name_text': 'Company',
-        'country_code_text': 'BE'
-        })
+        'country_code_text': 'BE',})
     password_form = FillInPasswordDetails(request.POST or None, initial={
-        'password_text': 'system'
-        })
+        'password_text': 'system',})
     if create_cert_form.is_valid() and password_form.is_valid():
         ca_cert = get_object_or_404(Certificate, pk=ca_id)
 
