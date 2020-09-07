@@ -12,10 +12,20 @@ services:
       - ./.env.prod
 
   nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile.nginx
+    restart: unless-stopped
+    image: staticfloat/nginx-certbot
     ports:
-      - 443:443
+      - 80:80/tcp
+      - 443:443/tcp
+    environment:
+      CERTBOT_EMAIL: david.tillemans@cryptable.org
+    volumes:
+      - ./conf.d:/etc/nginx/user.conf.d:ro
+      - letsencrypt:/etc/letsencrypt
+      - static_volume:/home/app/web/staticfiles
     depends_on:
       - web
+
+volumes:
+  letsencrypt:
+  static_volume:
