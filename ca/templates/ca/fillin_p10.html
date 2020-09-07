@@ -13,12 +13,13 @@
 <form action="{% url 'ca:certify_p10' ca.id %}" method="post">
 {% csrf_token %}
     <label for="p10">Copy/Past your PKCS10</label><br>
-    <textarea id="p10" name="p10" cols="77" rows="40"></textarea>
+    <textarea id="p10" name="p10" cols="66" rows="20"></textarea>
     <br>
     <input type="submit" value="Certify">
 </form>
 <p>
-    <label for="p10_dname">PKCS10 DName</label><input id="p10_dname" type="text" size="50" value="cn=John Doe,o=Company,c=US"><br>
+    If the Firefox extension is installed, you press the button 'Create Signing Key' to generate the PKCS10 request.<br>
+    <label for="p10_dname">PKCS10 DName</label><input id="p10_dname" type="text" size="50" value="cn=John Doe Singing,o=Company,c=US"><br>
     <button id="create_signing_key" type="button">Create Signing Key</button>
 </p>
 {% endblock %}

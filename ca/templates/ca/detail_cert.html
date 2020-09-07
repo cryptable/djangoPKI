@@ -14,7 +14,10 @@
     Serial Number <li><div id="serial_nbr">{{ certificate.serial_number_text }}</div></li>
     <br>
     <a href="{% url 'ca:download_cert' certificate.id%}">Download Cert</a><br>
+    To install the certificate in the Windows Keystore using Firefox Extension:<br>
     <button id="install_certificate" type="button">Install Certificate</button><br>
+    <br>
+    To export the keypair from the Windows Keystore using Firefox Extension (the password is used to store it in the database and is normally hidden):<br>
     <label for="pfx_password">PFX Password to export:</label><input id="pfx_password" type="text" size="20" value="system"><br>
     <button id="export_pfx" type="button">Export PFX</button><br>
 
@@ -22,6 +25,7 @@
         <br>
         <a href="{% url 'ca:download_p12' certificate.id%}">Download PKCS12</a>
         <br>
+        To import the keypair in the Windows Keystore using Firefox Extension (the password is used to decrypt it from the database and is normally hidden):<br>
         <label for="p12_password">P12 Password to import:</label><input id="p12_password" type="text" size="20" value="system"><br>
         <button id="install_p12" type="button">Install PKCS12</button>
         <div id="native_message_result"></div>

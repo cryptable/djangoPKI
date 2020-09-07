@@ -197,9 +197,6 @@ class FillInCertForm(ModelForm):
         model = Certificate
         fields = ['common_name_text',
                   'organization_name_text',
-                  'organizational_unit_1_name_text',
-                  'organizational_unit_2_name_text',
-                  'organizational_unit_3_name_text',
                   'country_code_text',
                   ]
 
@@ -213,8 +210,14 @@ class FillInPasswordDetails(ModelForm):
 
 
 def create_cert(request, ca_id):
-    create_cert_form = FillInCertForm(request.POST or None)
-    password_form = FillInPasswordDetails(request.POST or None)
+    create_cert_form = FillInCertForm(request.POST or None, initial={
+        'common_name_text': 'John Doe Encryption',
+        'organization_name_text': 'Company',
+        'country_code_text': 'BE'
+        })
+    password_form = FillInPasswordDetails(request.POST or None, initial={
+        'password_text': 'system'
+        })
     if create_cert_form.is_valid() and password_form.is_valid():
         ca_cert = get_object_or_404(Certificate, pk=ca_id)
 
@@ -227,16 +230,10 @@ def create_cert(request, ca_id):
         certificate = create_cert_form.save(commit=False)
         common_name = certificate.common_name_text
         organization_name = certificate.organization_name_text
-        organizational_unit_1_name = certificate.organizational_unit_1_name_text
-        organizational_unit_2_name = certificate.organizational_unit_2_name_text
-        organizational_unit_3_name = certificate.organizational_unit_3_name_text
         common_country_code = certificate.country_code_text
         subject = x509.Name([
             x509.NameAttribute(NameOID.COMMON_NAME, common_name),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization_name),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organizational_unit_1_name),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organizational_unit_2_name),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, organizational_unit_3_name),
             x509.NameAttribute(NameOID.COUNTRY_NAME, common_country_code), ])
         tmp_private_key = password_form.save(commit=False)
 
