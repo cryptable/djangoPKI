@@ -26,10 +26,23 @@
 
 {% block post-scripts %}
 <script>
+    function generateId(length) {
+        var result           = '';
+        var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var charactersLength = characters.length;
+        for ( var i = 0; i < length; i++ ) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+
+        return result;
+    }
+
     function create_csr( subjectName, bitLength, callback) {
+        requestId = generateId(10);
         window.postMessage({
             direction: "from-page-script",
             message: {
+                request_id:requestId,
                 request:"create_csr",
                 subject_name: subjectName,
                 rsa_key_length: bitLength
@@ -39,9 +52,11 @@
     }
 
     function import_certificate( base64_pem_certificate, callback) {
+        requestId = generateId(10);
         window.postMessage({
             direction: "from-page-script",
             message: {
+                request_id:requestId,
                 request:"import_certificate",
                 certificate: base64_pem_certificate
             }
@@ -50,9 +65,11 @@
     }
 
     function import_pfx_key( base64_pkcs12, passwd, callback) {
+        requestId = generateId(10);
         window.postMessage({
             direction: "from-page-script",
             message: {
+                request_id:requestId,
                 request:"import_pfx_key",
                 pkcs12: base64_pkcs12,
                 password: passwd
@@ -62,9 +79,11 @@
     }
 
     function export_pfx_key( issuer_dname, serial_nr, passwd, callback) {
+        requestId = generateId(10);
         window.postMessage({
             direction: "from-page-script",
             message: {
+                request_id:requestId,
                 request:"export_pfx_key",
                 issuer: issuer_dname,
                 serial_number: serial_nr,
