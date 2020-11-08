@@ -30,6 +30,7 @@ DEBUG = int(os.environ.get("DEBUG", default=0))
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
 
+OIDC_VERIFY_SSL = False
 
 # Application definition
 
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     'ca.apps.CaConfig',
     'django.contrib.admin',
     'django.contrib.auth',
+    # OpenID Connect Support to test GLUU server
+    'mozilla_django_oidc',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -52,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'mozilla_django_oidc.middleware.SessionRefresh',
 ]
 
 ROOT_URLCONF = 'djangoPKI.urls'
@@ -104,6 +108,41 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Add 'mozilla_django_oidc' authentication backend
+AUTHENTICATION_BACKENDS = (
+    'djangoPKI.authentication.MyOIDCAB',
+    # 'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
+    # ...
+)
+
+OIDC_RP_CLIENT_ID = os.environ['OIDC_RP_CLIENT_ID']
+OIDC_RP_CLIENT_SECRET = os.environ['OIDC_RP_CLIENT_SECRET']
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = "https://gluu.cryptable.local/oxauth/restv1/authorize"
+OIDC_OP_TOKEN_ENDPOINT = "https://gluu.cryptable.local/oxauth/restv1/token"
+OIDC_OP_USER_ENDPOINT = "https://gluu.cryptable.local/oxauth/restv1/userinfo"
+
+OIDC_TOKEN_USE_BASIC_AUTH = True
+
+OIDC_RP_SIGN_ALGO = "RS256"
+
+OIDC_RP_IDP_SIGN_KEY = """
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArhaAj+mKrbMgtp5mHPV3
+OIAD6B+UOx5xkHz6GxCmH6rFSm7lp+qooAMAkdQZXjVJm/n8gohCl39tVNu42+5h
+wjnS2z2cWJ12vDj10BGTZV92gI6j46HWJZFj9INB4AS9FCM6ziqJcwCG3sMFlW9F
+4EImvvq/uPN+nuHIDX12BCKb9XV2na1h9tw1V2ZsPs0ra2fszvBfTFulkmDJwuSP
+zPJyTt1s+mnQ0gw+b2P1HEotD2SZZbn0LvHXLPkCLmjBk3yo7oIH/j4DPRDTYBwG
+GesjDd0VIIeT+EdVXRy9Wiv1neTJuq7TSlRwkikZFYPeY/bIi17xZsUdPWHZm2+E
++QIDAQAB
+-----END PUBLIC KEY-----
+"""
+
+OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 600
+OIDC_RP_SCOPES = "openid email permission"
+
+LOGIN_REDIRECT_URL = "http://localhost:8000/"
+LOGOUT_REDIRECT_URL = "http://localhost:8000/"
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
@@ -124,3 +163,41 @@ USE_TZ = True
 
 STATIC_URL = '/staticfiles/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': [],
+        }
+    },
+    'loggers': {
+        'mozilla_django_oidc': {
+            'handlers': ['console'],
+            'level': 'DEBUG'
+        },
+        'djangoPKI.authentication': {
+            'handlers': ['console'],
+            'level': 'DEBUG'
+        },
+    }
+}

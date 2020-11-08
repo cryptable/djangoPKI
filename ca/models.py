@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class PrivateKey(models.Model):
     """
     Private key field with password
@@ -39,11 +38,11 @@ class Certificate(models.Model):
     postal_code_text = models.CharField(max_length=16, blank=True, null=True)
     country_code_text = models.CharField(max_length=2, blank=True, null=True)
     subject_serial_number_text = models.CharField(max_length=128, blank=True, null=True)    # TODO: length check
-    domain_component_1_text = models.CharField(max_length=128, blank=True, null=True)       # TODO: length check
-    domain_component_2_text = models.CharField(max_length=128, blank=True, null=True)       # TODO: length check
-    domain_component_3_text = models.CharField(max_length=128, blank=True, null=True)       # TODO: length check
-    domain_component_4_text = models.CharField(max_length=128, blank=True, null=True)       # TODO: length check
-    domain_component_5_text = models.CharField(max_length=128, blank=True, null=True)       # TODO: length check
+    domain_component_1_text = models.CharField(max_length=64, blank=True, null=True)       # TODO: length check
+    domain_component_2_text = models.CharField(max_length=64, blank=True, null=True)       # TODO: length check
+    domain_component_3_text = models.CharField(max_length=64, blank=True, null=True)       # TODO: length check
+    domain_component_4_text = models.CharField(max_length=64, blank=True, null=True)       # TODO: length check
+    domain_component_5_text = models.CharField(max_length=64, blank=True, null=True)       # TODO: length check
     email_address_text = models.CharField(max_length=128, blank=True, null=True)            # TODO: length check
 
     subject_text = models.CharField(max_length=8192)

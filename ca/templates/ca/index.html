@@ -3,6 +3,16 @@
 {% block title %}Fill in PKCS10{% endblock %}
 
 {% block content %}
+    {% if user.is_authenticated %}
+        <p>Current user: {{ user.email }}</p>
+        <form action="{% url 'oidc_logout' %}" method="post">
+            {% csrf_token %}
+            <input type="submit" value="logout">
+        </form>
+    {% else %}
+        <a href="{% url 'oidc_authentication_init' %}">Login</a>
+    {% endif %}
+
 {% if ca_list %}
     <ul>
     {% for ca in ca_list %}

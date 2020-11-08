@@ -19,4 +19,7 @@ from django.urls import include, path
 urlpatterns = [
     path('', include('ca.urls')),
     path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
+    # Mozilla OIDC integration
+    path('oidc/', include('mozilla_django_oidc.urls')),
 ]

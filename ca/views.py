@@ -1,6 +1,8 @@
 import datetime
 import os
 from binascii import b2a_base64
+
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views import generic
@@ -8,12 +10,12 @@ from django.urls import reverse
 from django.utils import timezone
 from django.forms import ModelForm
 
+from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, pkcs12
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from cryptography import x509
 
 from .models import Certificate, PrivateKey
 
@@ -47,7 +49,7 @@ class CertificatesOfCAView(generic.ListView):
             'certificate_list': context,
         }
 
-
+@login_required
 def fillin_p10(request, ca_id):
     ca_cert = get_object_or_404(Certificate, pk=ca_id)
     return render(request, 'ca/fillin_p10.html', {'ca': ca_cert})
@@ -64,17 +66,17 @@ def certify_p10(request, ca_id):
 
     # Load Request
     p10 = request.POST['p10']
-    x509req = x509.load_pem_x509_csr(p10.encode('ascii'), default_backend())
+    x509req = x509.load_pem_x509_csr(p10.encode('ascii'))
 
     # Create certificate for it
     sernum = x509.random_serial_number()
-    cert = x509.CertificateBuilder()\
-        .issuer_name(cacert.subject)\
-        .subject_name(x509req.subject)\
-        .public_key(x509req.public_key())\
-        .serial_number(sernum)\
-        .not_valid_before(timezone.now())\
-        .not_valid_after(timezone.now() + datetime.timedelta(days=366))\
+    cert = x509.CertificateBuilder() \
+        .issuer_name(cacert.subject) \
+        .subject_name(x509req.subject) \
+        .public_key(x509req.public_key()) \
+        .serial_number(sernum) \
+        .not_valid_before(timezone.now()) \
+        .not_valid_after(timezone.now() + datetime.timedelta(days=366)) \
         .add_extension(x509.KeyUsage(digital_signature=True,
                                      content_commitment=True,
                                      key_encipherment=False,
@@ -83,7 +85,7 @@ def certify_p10(request, ca_id):
                                      key_cert_sign=False,
                                      crl_sign=False,
                                      encipher_only=False,
-                                     decipher_only=False), critical=True)\
+                                     decipher_only=False), critical=True) \
         .sign(key, hashes.SHA256(), default_backend())
 
     pemCert = cert.public_bytes(serialization.Encoding.PEM).decode('ascii')
@@ -147,6 +149,7 @@ def certify_p10(request, ca_id):
             new_cert.email_address_text = attribute.value
         if attribute.oid == NameOID.POSTAL_CODE:
             new_cert.postal_code_text = attribute.value
+
     new_cert.save()
     return HttpResponseRedirect(reverse('ca:certs_of_ca', args=(ca_id,)))
 

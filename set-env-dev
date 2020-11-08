@@ -1,0 +1,5 @@
+export DEBUG=1
+export SECRET_KEY=dummy-for-development
+export DJANGO_ALLOWED_HOSTS="pki.cryptable.local localhost 127.0.0.1 [::1]"
+OIDC_RP_CLIENT_ID=9e165b2d-c1d8-4d4b-a567-6b1217b7176a
+OIDC_RP_CLIENT_SECRET=rUzOvym3RnS9tcZwti7W3LUb1aIGywX26Fieb29k
